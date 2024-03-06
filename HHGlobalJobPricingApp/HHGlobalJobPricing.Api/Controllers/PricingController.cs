@@ -16,11 +16,10 @@ namespace HHGlobalJobPricing.Api.Controllers
         }
 
         [HttpPost("calculate")]
-        public IActionResult CalculateTotalCharge(Job job)
+        public IActionResult CalculateTotalCharge(JobInput job)
         {
             var jobResult = _pricingCalculator.CalculateTotalPrice(job);
 
-            // Return the result in JSON format
             return Ok(jobResult);
         }
     }

@@ -1,4 +1,5 @@
-﻿using HHGlobalJobPricing.Core.Interfaces;
+﻿using HHGlobalJobPricing.Core.Extensions;
+using HHGlobalJobPricing.Core.Interfaces;
 using HHGlobalJobPricing.Core.Models;
 
 namespace HHGlobalJobPricing.Core.Services
@@ -7,66 +8,44 @@ namespace HHGlobalJobPricing.Core.Services
     {
         private const decimal BaseMargin = 0.11m;
         private const decimal ExtraMargin = 0.05m;
+        private const decimal SalesTaxRate = 0.07m;
 
-        public JobResult CalculateTotalPrice(Job job)
+        public JobOutput CalculateTotalPrice(JobInput job)
         {
-            var jobResult = new JobResult
+            var jobResult = new JobOutput
             {
-                Items = new List<PrintItemResult>()
+                Items = new List<ItemOutput>()
             };
 
             foreach (var item in job.Items)
             {
                 decimal itemPrice = CalculateItemPrice(item);
                 decimal margin = CalculateMargin(item.Cost, job.HasExtraMargin);
-                jobResult.Items.Add(new PrintItemResult
+
+                jobResult.Items.Add(new ItemOutput
                 {
                     Name = item.Name,
-                    Cost = RoundToNearestCent(itemPrice)
+                    Cost = itemPrice.RoundToNearestCent()
                 });
-                itemPrice += margin;
-                jobResult.TotalPrice += itemPrice;
+
+                jobResult.TotalPrice += itemPrice + margin;
             }
-            jobResult.TotalPrice = RoundToNearestEvenCent(jobResult.TotalPrice);
+
+            jobResult.TotalPrice = jobResult.TotalPrice.RoundToNearestEvenCent();
             return jobResult;
         }
 
-        private decimal CalculateItemPrice(PrintItem item)
+        private decimal CalculateItemPrice(ItemInput item)
         {
             decimal itemPrice = item.Cost;
-            decimal salesTax = CalculateSalesTax(itemPrice, item.IsTaxExempt);
-          
-            itemPrice += salesTax;
-
-            return itemPrice;
-        }
-
-        private decimal CalculateSalesTax(decimal cost, bool isTaxExempt)
-        {
-            if (isTaxExempt)
-            {
-                return 0;
-            }
-            else
-            {
-                return cost * 0.07m; // 7% sales tax
-            }
+            decimal salesTax = item.IsTaxExempt ? 0 : itemPrice * SalesTaxRate;
+            return itemPrice + salesTax;
         }
 
         private decimal CalculateMargin(decimal cost, bool hasExtraMargin)
         {
-            decimal margin = hasExtraMargin ? BaseMargin + ExtraMargin: BaseMargin;
+            decimal margin = hasExtraMargin ? BaseMargin + ExtraMargin : BaseMargin;
             return cost * margin;
-        }
-
-        private decimal RoundToNearestCent(decimal value)
-        {
-            return Math.Round(value, 2, MidpointRounding.AwayFromZero);
-        }
-
-        private decimal RoundToNearestEvenCent(decimal value)
-        {
-            return Math.Round(value * 2, MidpointRounding.ToEven) / 2;
         }
     }
 }

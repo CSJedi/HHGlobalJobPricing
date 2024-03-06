@@ -1,6 +1,6 @@
 ﻿namespace HHGlobalJobPricing.Core.Models
 {
-    public class PrintItemResult
+    public abstract class ItemBase
     {
         public string Name { get; set; }
         public decimal Cost { get; set; }
